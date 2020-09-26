@@ -1,6 +1,13 @@
 .openEdit {
     margin-right: 5px;
 }
+.logo img{
+    width: fit-content;
+}
 .logo{
-    width: 100px;
+    max-height: 50px;
+    margin: 10px;
+}
+.add-task-alert{
+    margin-top: 1rem;
 }
