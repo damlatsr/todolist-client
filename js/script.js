@@ -1,18 +1,38 @@
 var editId;
-$(document).ready(function() {
-    //Task List
-    $.get('http://127.0.0.1:8000/api/todolist?isDeleted=true', function(data, textStatus) {
+function taskList(newPage, deleted)
+{
+    $.get('http://127.0.0.1:8000/api/todolist?isDeleted='+ deleted +'&page='+newPage, function(data, textStatus) {
+        $('#list-items > tr').remove();
+        $('.pagination > li').remove();
         jQuery.each(data.data, function(i, val) {
             $("#list-items").append('<tr id="' + val.id + '"><th scope="row">' + val.id + '</th><td>' + val.title + '</td><td>' + val.description + '</td><td>' + ((val.isDone != 1) ? "-" : "Tamamlandı") + '</td><td><button type="button" class="btn btn-primary openEdit" data-id="'+val.id+'" data-title="'+val.title+'" data-description="'+val.description+'">Düzenle</button><button class="btn btn-danger delete" data-id="' + val.id + '">Sil</button></td></tr>');
         });
+        var lastPage = data.meta.last_page;
+        var page = data.meta.current_page;
+        if (page !== 1)
+        {
+            $('.pagination').append('<li class="page-item"><a class="page-link" href="#" data-page="'+ (page-1) +'" data-isDeleted='+ deleted +'">Previous</a></li>');
+        }
+        for(var i = 1; i <= lastPage; i++)
+        {
+            $('.pagination').append('<li class="page-item'+ (i === page ? " active":"")+'"><a class="page-link" href="#" data-page="'+ i +'" data-isDeleted='+ deleted +'">'+i+'</a></li>');
+        }
+        if (page !== lastPage)
+        {
+            $('.pagination').append('<li class="page-item"><a class="page-link" href="#" data-page="'+ (page+1) +'" data-isDeleted='+ deleted +'">Next</a></li>');
+        }
 
     });
+}
+
+$(document).ready(function() {
+    //Task List
+    taskList(1, 0);
 
     //Add New Task
     $('#submit').on('click', function() {
         var title = $("#exampleInputText1").val();
         var description = $("#exampleInputDescription1").val();
-        //alert('Form submit edildi'+title);
 
         $.post('http://127.0.0.1:8000/api/todolist', // url
             {
@@ -20,8 +40,6 @@ $(document).ready(function() {
                 description: description
             }, // data to be submit
             function(data, status) { // success callback
-                //val = data.data;
-                //$("#list-items").append('<tr id="' + val.id + '"><th scope="row">' + val.id + '</th><td>' + val.title + '</td><td>' + val.description + '</td><td>' + ((val.isDone != 1) ? "-" : "Tamamlandı") + '</td><td><button type="button" class="btn btn-primary openEdit">Düzenle</button><button class="btn btn-danger delete" data-id="' + val.id + '">Sil</button></td></tr>');
                 location.reload();
             })
     })
@@ -62,15 +80,28 @@ $(document).ajaxComplete(function(event, request, settings) {
 
     //Open Edit Popup
     $('.openEdit').on('click',function(){
-        //var dataURL = $(this).attr('data-href');
         var id = $(this).data("id");
         var title = $(this).data("title");
         var description = $(this).data("description");
+
         $('#open-edit').modal({show:true});
         $('#inputTitle').val(title);
         $('#inputDescription').val(description);
 
         editId=id;
+    });
+
+    //Pagination
+    $('.page-link').on('click',function(){
+       var newPage = $(this).data("page");
+       var isDeleted = $(this).data("isDeleted");
+
+       taskList(newPage, isDeleted);
+    });
+
+    //Deleted Task
+    $('.deleted').on('click',function(){
+       taskList(1, 1);
     });
 
 });
